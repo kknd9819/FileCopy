@@ -47,6 +47,7 @@ public class FileCopyClient {
 			fileDTO.setTotal(fileList.size());
 			fileDTO.setCurrent(--total);
 			System.out.println("总文件数： " + fileList.size() + ", 剩余文件：" + fileDTO.getCurrent());
+			System.out.println();
 			out.writeObject(fileDTO);
 			out.flush();
 			
@@ -70,7 +71,6 @@ public class FileCopyClient {
 			}
 			bis.close();
 			socket.close();
-			System.out.println();
 			System.out.println();
 			System.out.println("============================================");
 		}
