@@ -10,6 +10,8 @@ public class FileDTO implements Serializable{
 	private int c;
 	private long fileLength;
 	private long overLength;
+	private int total;
+	private int current;
 	private byte[] buff;
 	
 	public String getAbsolutePath() {
@@ -43,4 +45,17 @@ public class FileDTO implements Serializable{
 	public void setC(int c) {
 		this.c = c;
 	}
+	public int getTotal() {
+		return total;
+	}
+	public void setTotal(int total) {
+		this.total = total;
+	}
+	public int getCurrent() {
+		return current;
+	}
+	public void setCurrent(int current) {
+		this.current = current;
+	}
+	
 }

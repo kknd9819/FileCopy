@@ -37,16 +37,19 @@ public class FileCopyClient {
 	}
 	
 	private static void transfer(List<File> fileList, String ipAddress) throws Exception {
+		int total = fileList.size();
 		for (File file : fileList) {
 			Socket socket = new Socket(ipAddress, 9000);
 			ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
 			FileDTO fileDTO = new FileDTO();
 			fileDTO.setAbsolutePath(file.getAbsolutePath());
 			fileDTO.setFileLength(file.length());
+			fileDTO.setTotal(fileList.size());
+			fileDTO.setCurrent(--total);
+			System.out.println("总文件数： " + fileList.size() + ", 剩余文件：" + fileDTO.getCurrent());
 			out.writeObject(fileDTO);
 			out.flush();
 			
-			System.out.println("开始传输：" + file.getAbsolutePath());
 			BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));
 			int c;
 			long overLength = 0;
@@ -68,7 +71,6 @@ public class FileCopyClient {
 			bis.close();
 			socket.close();
 			System.out.println();
-			System.out.println(file.getAbsolutePath() + " 传输完毕..");
 			System.out.println();
 			System.out.println("============================================");
 		}

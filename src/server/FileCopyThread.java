@@ -30,7 +30,7 @@ public class FileCopyThread implements Runnable{
 			createTargetDir(targetPath);
 			
 			BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(targetPath));
-			System.out.println("开始接收: " + fileDTO.getAbsolutePath());
+			System.out.println("总文件数： " + fileDTO.getTotal() + ", 剩余文件：" + fileDTO.getCurrent());
 			while (true) {
 				try {
 					FileDTO dto = (FileDTO) in.readObject();
@@ -47,7 +47,6 @@ public class FileCopyThread implements Runnable{
 			}
 			out.close();
 			System.out.println();
-			System.out.println(fileDTO.getAbsolutePath() + " 接收完成..");
 			System.out.println();
 			System.out.println("============================================");
 		} catch (Exception e) {
