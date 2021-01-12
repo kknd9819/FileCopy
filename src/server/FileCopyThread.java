@@ -38,13 +38,17 @@ public class FileCopyThread implements Runnable{
 			long overLength = 0;
 			byte[] buff = new byte[buffer];
 			
-			while ( (c = in.read(buff)) != -1 && (overLength += c) < fileLength) {
+			while ( (c = in.read(buff)) != -1 ) {
+				overLength += c;
 				double overLengthD = (double) overLength;
 				double fileLengthD = (double) fileLength;
 				long over = (long) (overLengthD / fileLengthD * 100);
 				String progress = absolutePath + " >>> 已完成 :" + over + "%\r";
 				System.out.print(progress);
 				out.write(buff, 0, c);
+				if (overLength >= fileLength) {
+					break;
+				}
 			}
 			
 			out.flush();
