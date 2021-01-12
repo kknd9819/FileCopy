@@ -1,14 +1,11 @@
 package server;
 
 import java.io.BufferedOutputStream;
-import java.io.EOFException;
+import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileOutputStream;
-import java.io.ObjectInputStream;
 import java.net.Socket;
 import java.nio.file.Files;
-
-import client.FileDTO;
 
 public class FileCopyThread implements Runnable{
 	
@@ -23,30 +20,36 @@ public class FileCopyThread implements Runnable{
 	@Override
 	public void run() {
 		try {
-			ObjectInputStream in = new ObjectInputStream(socket.getInputStream());
-			FileDTO fileDTO = (FileDTO) in.readObject();
-			String absolutePath = fileDTO.getAbsolutePath();
+			DataInputStream in = new DataInputStream(socket.getInputStream());
+			String absolutePath = in.readUTF();
+			long total = in.readLong();
+			int current = in.readInt();
+			long fileLength = in.readLong();
+			
 			String targetPath = getFilePath(target, absolutePath);
 			createTargetDir(targetPath);
-			
 			BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(targetPath));
-			System.out.println("总文件数： " + fileDTO.getTotal() + ", 剩余文件：" + fileDTO.getCurrent());
+			
+			System.out.println("总文件数： " + total + ", 剩余文件：" + current);
 			System.out.println();
-			while (true) {
-				try {
-					FileDTO dto = (FileDTO) in.readObject();
-					out.write(dto.getBuff(), 0, dto.getC());
-					out.flush();
-					double overLengthD = (double) dto.getOverLength();
-					double fileLengthD = (double) fileDTO.getFileLength();
-					long over =  (long) (overLengthD / fileLengthD * 100);
-					String progress = fileDTO.getAbsolutePath() + " >>> 已完成 :" + over + "%\r";
-					System.out.print(progress);
-				} catch (EOFException ex) {
-					break;
-				}
+			
+			int c = 0;
+			int buffer = 8192;
+			long overLength = 0;
+			byte[] buff = new byte[buffer];
+			
+			while ( (c = in.read(buff)) != -1 && (overLength += c) < fileLength) {
+				double overLengthD = (double) overLength;
+				double fileLengthD = (double) fileLength;
+				long over = (long) (overLengthD / fileLengthD * 100);
+				String progress = absolutePath + " >>> 已完成 :" + over + "%\r";
+				System.out.print(progress);
+				out.write(buff, 0, c);
 			}
+			
+			out.flush();
 			out.close();
+			in.close();
 			System.out.println();
 			System.out.println("============================================");
 		} catch (Exception e) {

@@ -1,9 +1,9 @@
 package client;
 
 import java.io.BufferedInputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,39 +37,48 @@ public class FileCopyClient {
 	}
 	
 	private static void transfer(List<File> fileList, String ipAddress) throws Exception {
-		int total = fileList.size();
+		int current = fileList.size();
 		for (File file : fileList) {
 			Socket socket = new Socket(ipAddress, 9000);
-			ObjectOutputStream out = new ObjectOutputStream(socket.getOutputStream());
-			FileDTO fileDTO = new FileDTO();
-			fileDTO.setAbsolutePath(file.getAbsolutePath());
-			fileDTO.setFileLength(file.length());
-			fileDTO.setTotal(fileList.size());
-			fileDTO.setCurrent(--total);
-			System.out.println("总文件数： " + fileList.size() + ", 剩余文件：" + fileDTO.getCurrent());
+			DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+			BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));
+			
+			System.out.println("总文件数： " + fileList.size() + ", 剩余文件：" + --current);
 			System.out.println();
-			out.writeObject(fileDTO);
+			
+			int c = 0;
+			int buffer = 8192;
+			long overLength = 0;
+			long fileLength = file.length();
+			String absolutePath = file.getAbsolutePath();
+			byte[] buff = new byte[buffer];
+			
+			// 路径
+			out.writeUTF(absolutePath);
+			out.flush();
+			// 总文件数量
+			out.writeLong(fileList.size());
+			out.flush();
+			// 当前文件数量
+			out.writeInt(current);
+			out.flush();
+			// 当前文件长度
+			out.writeLong(fileLength);
 			out.flush();
 			
-			BufferedInputStream bis = new BufferedInputStream(new FileInputStream(file));
-			int c;
-			long overLength = 0;
-			byte[] buff = new byte[8192];
-			while (( c = bis.read(buff)) != -1) {
+			while ( ( c = bis.read(buff)) != -1) {
 				overLength += c;
-				FileDTO dto = new FileDTO();
-				dto.setOverLength(overLength);
-				dto.setBuff(buff);
-				dto.setC(c);
-				out.writeObject(dto);
-				out.flush();
 				double overLengthD = (double) overLength;
-				double fileLengthD = (double) file.length();
+				double fileLengthD = (double) fileLength;
 				long over = (long) (overLengthD / fileLengthD * 100);
-				String progress = file.getAbsolutePath() + " >>> 已完成 :" + over + "%\r";
+				String progress = absolutePath + " >>> 已完成 :" + over + "%\r";
 				System.out.print(progress);
+				out.write(buff, 0, c);
 			}
+			
+			out.flush();
 			bis.close();
+			out.close();
 			socket.close();
 			System.out.println();
 			System.out.println("============================================");
